@@ -27,6 +27,11 @@
       "csp": null
     }
   },
+  "plugins": {
+    "sql": {
+      "preload": ["sqlite:clipboard.db"]
+    }
+  },
   "bundle": {
     "active": true,
     "targets": "all",

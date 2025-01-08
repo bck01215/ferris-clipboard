@@ -5,11 +5,15 @@
   import { getCurrentWindow } from "@tauri-apps/api/window";
   import { onMount } from "svelte";
   import { MoveWindowToCursor } from "$lib/move";
-
   const appWindow = getCurrentWindow();
   const { register, unregister } = window.__TAURI__.globalShortcut;
   onMount(async () => {
-    await unregister("Shift+space");
+    try{
+
+      await unregister("Shift+space");
+    } catch{
+      console.log("No registered shortcut")
+    }
     await register("Shift+space", async () => {
       console.log("Shortcut triggered");
       await MoveWindowToCursor();
@@ -17,11 +21,11 @@
   });
 </script>
 
-<div data-tauri-drag-region class="titlebar">
+<div data-tauri-drag-region class="titlebar m-b2">
   <div class="titlebar-button" id="titlebar-minimize">
     <button
       type="button"
-      on:click={() => appWindow.minimize()}
+      on:click={() => appWindow.hide()}
       class="text-yellow-400 dark:text-yellow-400 hover:bg-yellow-100 dark:hover:bg-yellow-300 dark:hover:bg-opacity-25 focus:outline-none rounded-lg text-sm p-2.5"
     >
       <CircleMinusSolid />
@@ -41,7 +45,7 @@
   </div>
 </div>
 
-<div class="p-8 w-screen h-screen bg-red">
+<div class="w-screen h-screen m-1">
   <slot />
 </div>
 
@@ -52,7 +56,6 @@
     user-select: none;
     display: flex;
     justify-content: flex-end;
-    position: fixed;
     top: 0;
     left: 0;
     right: 0;
@@ -65,5 +68,8 @@
     height: 30px;
     user-select: none;
     -webkit-user-select: none;
+  }
+  :global(html){
+    overflow: hidden;
   }
 </style>

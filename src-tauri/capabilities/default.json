@@ -20,6 +20,8 @@
     "core:webview:allow-set-webview-position",
     "core:window:allow-set-position",
     "core:window:allow-show",
-    "core:window:allow-set-focus"
+    "core:window:allow-set-focus",
+    "sql:default",
+    "sql:allow-execute"
   ]
 }

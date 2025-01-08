@@ -17,6 +17,9 @@ importers:
       '@tauri-apps/plugin-opener':
         specifier: ^2
         version: 2.2.3
+      '@tauri-apps/plugin-sql':
+        specifier: ~2
+        version: 2.2.0
     devDependencies:
       '@sveltejs/adapter-static':
         specifier: ^3.0.6
@@ -500,6 +503,9 @@ packages:
 
   '@tauri-apps/plugin-opener@2.2.3':
     resolution: {integrity: sha512-QZDtGwqs2ssjc+GbHzTFlN0gtgXR7B1dcphIJ3vBrX+PXOdI58hP82TyT2rbH2myBVj2uWkyqKhM8FbbGopqng==}
+
+  '@tauri-apps/plugin-sql@2.2.0':
+    resolution: {integrity: sha512-yGdybpaMENe/p6lTXslvDHYNNvD9qB7palaBBF5fJHdYSkwd3vrLiYU9dFfLwUAwnsBylND55EiivWsjhazejA==}
 
   '@types/cookie@0.6.0':
     resolution: {integrity: sha512-4Kh9a6B2bQciAhf7FSuMRRkUWecJgJu9nPnx3yzpsfXX/c50REIqpHY4C82bXP90qrLtXtkDxTZosYO3UpOwlA==}
@@ -1530,6 +1536,10 @@ snapshots:
       '@tauri-apps/api': 2.2.0
 
   '@tauri-apps/plugin-opener@2.2.3':
+    dependencies:
+      '@tauri-apps/api': 2.2.0
+
+  '@tauri-apps/plugin-sql@2.2.0':
     dependencies:
       '@tauri-apps/api': 2.2.0
 

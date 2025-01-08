@@ -1,10 +1,24 @@
 <script>
-  import { Alert } from "flowbite-svelte";
+  import { Tabs, TabItem } from 'flowbite-svelte';
 </script>
 
-<div class="p-8">
-  <Alert border color="red">
-    <span class="font-medium">Info alert!</span>
-    Change a few things up and try submitting again.
-  </Alert>
-</div>
+<Tabs class="w-screen flex">
+  <TabItem title="Overrides" class="flex-1">
+    <p class="text-sm text-gray-500 dark:text-gray-400">
+      <b>Profile:</b>
+      Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+    </p>
+  </TabItem>
+  <TabItem title="History" open class="flex-1">
+    <p class="text-sm text-gray-500 dark:text-gray-400">
+      <b>Settings:</b>
+      Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+    </p>
+  </TabItem>
+  <TabItem title="Saved" class="flex-1">
+    <p class="text-sm text-gray-500 dark:text-gray-400">
+      <b>Settings:</b>
+      Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+    </p>
+  </TabItem>
+</Tabs>
