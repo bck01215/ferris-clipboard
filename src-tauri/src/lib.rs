@@ -1,8 +1,5 @@
 use tauri_plugin_sql::{Migration, MigrationKind};
 
-
-
-
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let migrations = vec![
@@ -28,9 +25,10 @@ pub fn run() {
                 );
             ",
             kind: MigrationKind::Up,
-        }
+        },
     ];
     tauri::Builder::default()
+        .plugin(tauri_plugin_clipboard::init())
         .plugin(tauri_plugin_sql::Builder::new().build())
         .plugin(
             tauri_plugin_sql::Builder::default()

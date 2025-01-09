@@ -18,7 +18,7 @@
         "height": 550,
         "alwaysOnTop": true,
         "resizable": false,
-        "shadow": false,
+        "shadow": true,
         "theme": "Dark",
         "decorations": false
       }

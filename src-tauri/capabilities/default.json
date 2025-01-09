@@ -22,6 +22,10 @@
     "core:window:allow-show",
     "core:window:allow-set-focus",
     "sql:default",
-    "sql:allow-execute"
+    "sql:allow-execute",
+    "clipboard:allow-start-monitor", 
+		"clipboard:read-all",
+		"clipboard:write-all",
+		"clipboard:monitor-all"
   ]
 }

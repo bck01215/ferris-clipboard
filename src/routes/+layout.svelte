@@ -1,23 +1,56 @@
-<script>
+<script lang="ts">
   import "../app.css";
   import { DarkMode } from "flowbite-svelte";
   import { CircleMinusSolid, CloseCircleSolid } from "flowbite-svelte-icons";
   import { getCurrentWindow } from "@tauri-apps/api/window";
-  import { onMount } from "svelte";
+  import { onDestroy, onMount } from "svelte";
   import { MoveWindowToCursor } from "$lib/move";
+  import { add_item } from "$lib/database";
   const appWindow = getCurrentWindow();
+  import type { UnlistenFn } from "@tauri-apps/api/event";
+  import {
+    onHTMLUpdate,
+    onImageUpdate,
+    onTextUpdate,
+    startListening,
+  } from "tauri-plugin-clipboard-api";
   const { register, unregister } = window.__TAURI__.globalShortcut;
+  let unlisten: UnlistenFn;
+  let unlistenTextUpdate: UnlistenFn;
+  let unlistenImageUpdate: UnlistenFn;
+  let unlistenHtmlUpdate: UnlistenFn;
   onMount(async () => {
-    try{
-
+    // unlisten = await getCurrentWindow().onFocusChanged(({ payload: focused }) => {
+    //   if (!focused) {
+    //     appWindow.hide();
+    //   }
+    // });
+    unlistenTextUpdate = await onTextUpdate(async (event) => {
+      add_item({ data_type: "text", value: event });
+    });
+    unlistenImageUpdate = await onImageUpdate(async (event) => {
+      add_item({ data_type: "image", value: event });
+    });
+    // unlistenHtmlUpdate = await onHTMLUpdate(async (event) => {
+    //   console.log(event);
+    //   add_item({ data_type: "html", value: event });
+    // });
+    try {
       await unregister("Shift+space");
-    } catch{
-      console.log("No registered shortcut")
+    } catch {
+      console.log("No registered shortcut");
     }
     await register("Shift+space", async () => {
       console.log("Shortcut triggered");
       await MoveWindowToCursor();
     });
+    startListening();
+  });
+  onDestroy(async () => {
+    await unregister("Shift+space");
+    unlistenTextUpdate();
+    unlistenImageUpdate();
+    // unlistenHtmlUpdate();
   });
 </script>
 
@@ -45,7 +78,7 @@
   </div>
 </div>
 
-<div class="w-screen h-screen m-1">
+<div class="w-screen h-screen m-auto overflow-x-hidden pb-8 container">
   <slot />
 </div>
 
@@ -69,7 +102,15 @@
     user-select: none;
     -webkit-user-select: none;
   }
-  :global(html){
-    overflow: hidden;
+  :global(html) {
+    overflow-x: hidden;
+    overflow-y: hidden;
   }
+  .container {
+    -ms-overflow-style: none;  /* Internet Explorer 10+ */
+    scrollbar-width: none;  /* Firefox */
+}
+.container::-webkit-scrollbar { 
+    display: none;  /* Safari and Chrome */
+}
 </style>

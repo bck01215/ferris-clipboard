@@ -1,4 +1,4 @@
-import {  getCurrentWindow } from "@tauri-apps/api/window";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { cursorPosition } from "@tauri-apps/api/window";
 export async function MoveWindowToCursor() {
   const appwindow = getCurrentWindow();
