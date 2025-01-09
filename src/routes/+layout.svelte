@@ -12,13 +12,15 @@
     onHTMLUpdate,
     onImageUpdate,
     onTextUpdate,
+    onSomethingUpdate,
     startListening,
   } from "tauri-plugin-clipboard-api";
   const { register, unregister } = window.__TAURI__.globalShortcut;
   let unlisten: UnlistenFn;
   let unlistenTextUpdate: UnlistenFn;
   let unlistenImageUpdate: UnlistenFn;
-  let unlistenHtmlUpdate: UnlistenFn;
+  // let unlistenHtmlUpdate: UnlistenFn;
+  // let unlistenSomethingUpdate: UnlistenFn;
   onMount(async () => {
     // unlisten = await getCurrentWindow().onFocusChanged(({ payload: focused }) => {
     //   if (!focused) {
@@ -26,15 +28,20 @@
     //   }
     // });
     unlistenTextUpdate = await onTextUpdate(async (event) => {
+      console.log("found text");
       add_item({ data_type: "text", value: event });
     });
     unlistenImageUpdate = await onImageUpdate(async (event) => {
+      console.log("found image");
       add_item({ data_type: "image", value: event });
     });
     // unlistenHtmlUpdate = await onHTMLUpdate(async (event) => {
-    //   console.log(event);
+    //   console.log("found html");
     //   add_item({ data_type: "html", value: event });
     // });
+
+
+
     try {
       await unregister("Shift+space");
     } catch {
