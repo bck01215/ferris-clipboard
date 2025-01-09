@@ -22,11 +22,13 @@
   // let unlistenHtmlUpdate: UnlistenFn;
   // let unlistenSomethingUpdate: UnlistenFn;
   onMount(async () => {
-    unlisten = await getCurrentWindow().onFocusChanged(({ payload: focused }) => {
-      if (!focused) {
-        appWindow.hide();
-      }
-    });
+    unlisten = await getCurrentWindow().onFocusChanged(
+      ({ payload: focused }) => {
+        if (!focused) {
+          appWindow.hide();
+        }
+      },
+    );
     unlistenTextUpdate = await onTextUpdate(async (event) => {
       console.log("found text");
       add_item({ data_type: "text", value: event });
@@ -39,8 +41,6 @@
     //   console.log("found html");
     //   add_item({ data_type: "html", value: event });
     // });
-
-
 
     try {
       await unregister("Shift+space");
@@ -115,10 +115,10 @@
     overflow-y: hidden;
   }
   .container {
-    -ms-overflow-style: none;  /* Internet Explorer 10+ */
-    scrollbar-width: none;  /* Firefox */
-}
-.container::-webkit-scrollbar { 
-    display: none;  /* Safari and Chrome */
-}
+    -ms-overflow-style: none; /* Internet Explorer 10+ */
+    scrollbar-width: none; /* Firefox */
+  }
+  .container::-webkit-scrollbar {
+    display: none; /* Safari and Chrome */
+  }
 </style>
