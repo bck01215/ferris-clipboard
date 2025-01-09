@@ -22,11 +22,11 @@
   // let unlistenHtmlUpdate: UnlistenFn;
   // let unlistenSomethingUpdate: UnlistenFn;
   onMount(async () => {
-    // unlisten = await getCurrentWindow().onFocusChanged(({ payload: focused }) => {
-    //   if (!focused) {
-    //     appWindow.hide();
-    //   }
-    // });
+    unlisten = await getCurrentWindow().onFocusChanged(({ payload: focused }) => {
+      if (!focused) {
+        appWindow.hide();
+      }
+    });
     unlistenTextUpdate = await onTextUpdate(async (event) => {
       console.log("found text");
       add_item({ data_type: "text", value: event });
@@ -57,6 +57,7 @@
     await unregister("Shift+space");
     unlistenTextUpdate();
     unlistenImageUpdate();
+    unlisten();
     // unlistenHtmlUpdate();
   });
 </script>
