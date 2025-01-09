@@ -2,6 +2,7 @@
   import { Tabs, TabItem } from "flowbite-svelte";
   import History from "$lib/History.svelte";
   import Saved from "$lib/Saved.svelte";
+  import Overrides from "$lib/Overrides.svelte";
 </script>
 
 <Tabs class="w-screen flex" contentClass="w-full p-0 mt-4">
@@ -9,11 +10,7 @@
     <History />
   </TabItem>
   <TabItem title="Overrides" class="flex-2">
-    <p class="text-sm text-gray-500 dark:text-gray-400">
-      <b>Profile:</b>
-      Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
-      incididunt ut labore et dolore magna aliqua.
-    </p>
+    <Overrides />
   </TabItem>
   <TabItem title="Saved" class="flex-3">
     <Saved />

@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { GradientButton } from "flowbite-svelte";
-    import type { History } from "$lib/database";
+    import { GradientButton, Button } from "flowbite-svelte";
+    import { hiddenStore, type History } from "$lib/database";
     import ContextMenu from "$lib/HistoryContextMenu.svelte";
     import { writeImageBase64, writeHtml, writeText } from "tauri-plugin-clipboard-api";
     export let history: History[];
@@ -36,44 +36,50 @@
         if (browser.w -  pos.x < menu.w)
             pos.x = pos.x - menu.w
     }
-
-
+    function filterHidenItems(item: string): string{
+      let filteredItem = item
+      $hiddenStore.forEach(secret => {
+        filteredItem = filteredItem.replaceAll(secret.value, secret.display);
+      });
+      return filteredItem;
+    }    
 </script>
 {#each history as item }
 <div
 on:contextmenu|preventDefault={(e) => rightClickContextMenu(e, item)} 
 role="contentinfo"
+class="flex"
 >   
 
   {#if item.data_type == "text" && item.value.trim() != ""}
-    <GradientButton
+    <Button
       outline
       on:click={async (e) => {
         e.preventDefault();
         await writeText(item.value);
       }}
       size="xs"
-      color="teal"
-      class="w-72 h-min-6 h-max-12 overflow-hidden m-auto mt-2 mb-2"
+      color="{filterHidenItems(item.value)!=item.value ? 'purple' : 'blue'}"
+      class="w-11/12 h-min-6 h-max-12 overflow-hidden m-auto mt-2 mb-2 text-gray-700 hover:text-gray-100 dark:text-gray-100"
     >
       <div
-      class="w-full h-full max-h-8 overflow-hidden m-auto justify-center text-center"
+      class="w-full h-full max-h-8 overflow-hidden m-auto justify-center text-center "
       >
-        <p>{item.value}</p>
+        <p class="text-xs">{filterHidenItems(item.value)}</p>
       </div>
-    </GradientButton>
+    </Button>
   {:else if item.data_type == "html"}
-    <GradientButton
+    <Button
       outline
       on:click={async () => {
         await writeHtml(item.value);
       }}
       color="red"
       size="xs"
-      class="w-72 h-min-6 h-max-12 overflow-hidden m-auto mt-2 mb-2"
+      class="w-full h-min-6 h-max-12 overflow-hidden m-auto mt-2 mb-2"
     >
         {@html item.value}
-    </GradientButton>
+    </Button>
   {:else if item.data_type == "image"}
     <GradientButton
       outline
