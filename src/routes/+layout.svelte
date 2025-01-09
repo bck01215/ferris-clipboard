@@ -8,6 +8,7 @@
   import { add_item } from "$lib/database";
   const appWindow = getCurrentWindow();
   import type { UnlistenFn } from "@tauri-apps/api/event";
+  import { register, unregister } from "@tauri-apps/plugin-global-shortcut";
   import {
     onHTMLUpdate,
     onImageUpdate,
@@ -15,7 +16,6 @@
     onSomethingUpdate,
     startListening,
   } from "tauri-plugin-clipboard-api";
-  const { register, unregister } = window.__TAURI__.globalShortcut;
   let unlisten: UnlistenFn;
   let unlistenTextUpdate: UnlistenFn;
   let unlistenImageUpdate: UnlistenFn;
@@ -47,9 +47,10 @@
     } catch {
       console.log("No registered shortcut");
     }
-    await register("Shift+space", async () => {
-      console.log("Shortcut triggered");
-      await MoveWindowToCursor();
+    await register("Shift+space", async (e) => {
+      if (e.state == "Pressed") {
+        await MoveWindowToCursor();
+      }
     });
     startListening();
   });

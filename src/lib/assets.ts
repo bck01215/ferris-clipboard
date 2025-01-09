@@ -6,3 +6,4 @@ export type Color =
   | "pinkToOrange"
   | "tealToLime"
   | "redToYellow";
+
