@@ -6,7 +6,7 @@
 </script>
 
 <div class="mb-6">
-    <Input id="small-input" size="sm" placeholder="Search" bind:value={search} />
+    <Input id="small-input" size="sm" placeholder="Search" bind:value={search} autocomplete="off" />
 </div>
 
 <Contents history={$historyStore.filter((item) => {
