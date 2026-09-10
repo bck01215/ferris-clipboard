@@ -74,6 +74,29 @@ export async function delete_saved(value: string): Promise<QueryResult> {
   savedStore.set(await get_all_saved());
   return res;
 }
+
+/**
+ * Set (or clear, when `hotkey` is null) the global hotkey bound to a saved
+ * item. Hotkeys are unique across saved items; assigning one that is already in
+ * use clears it from the previous item first.
+ */
+export async function set_saved_hotkey(
+  id: number,
+  hotkey: string | null,
+): Promise<QueryResult> {
+  if (hotkey) {
+    await db.execute("UPDATE saved SET hotkey = NULL WHERE hotkey = $1", [
+      hotkey,
+    ]);
+  }
+  const res = db.execute("UPDATE saved SET hotkey = $1 WHERE id = $2", [
+    hotkey,
+    id,
+  ]);
+  await res;
+  savedStore.set(await get_all_saved());
+  return res;
+}
 export async function add_hidden(
   display: string,
   value: string,
@@ -101,9 +124,35 @@ export async function get_all(): Promise<History[]> {
 
 export async function get_all_saved(): Promise<History[]> {
   return db.select(
-    "SELECT DISTINCT data_type, value FROM saved ORDER BY id DESC",
+    "SELECT id, data_type, value, hotkey FROM saved ORDER BY id DESC",
   );
 }
+
+/** Read a setting, falling back to `fallback` when it has never been set. */
+export async function get_setting(
+  key: string,
+  fallback: string,
+): Promise<string> {
+  const rows: { value: string }[] = await db.select(
+    "SELECT value FROM settings WHERE key = $1",
+    [key],
+  );
+  return rows[0]?.value ?? fallback;
+}
+
+export async function set_setting(
+  key: string,
+  value: string,
+): Promise<QueryResult> {
+  return db.execute(
+    "INSERT INTO settings (key, value) VALUES ($1, $2) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+    [key, value],
+  );
+}
+
+/** Accelerator string for the global show/hide toggle. */
+export const TOGGLE_SHORTCUT_KEY = "toggle_shortcut";
+export const DEFAULT_TOGGLE_SHORTCUT = "Shift+Space";
 
 export async function get_all_hidden(): Promise<Secret[]> {
   return db.select(
@@ -119,8 +168,10 @@ export async function get_all_like(search: string): Promise<History[]> {
 }
 
 export type History = {
+  id?: number;
   data_type: "text" | "image" | "html";
   value: string;
+  hotkey?: string | null;
 };
 
 export type Secret = {

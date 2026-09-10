@@ -44,6 +44,20 @@ pub fn run() {
             ",
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 3,
+            description: "settings_and_saved_hotkeys",
+            sql: "
+                CREATE TABLE IF NOT EXISTS settings (
+                    key TEXT PRIMARY KEY,
+                    value TEXT NOT NULL
+                );
+                INSERT OR IGNORE INTO settings (key, value)
+                    VALUES ('toggle_shortcut', 'Shift+Space');
+                ALTER TABLE saved ADD COLUMN hotkey TEXT;
+            ",
+            kind: MigrationKind::Up,
+        },
     ];
     tauri::Builder::default()
         .plugin(tauri_plugin_os::init())

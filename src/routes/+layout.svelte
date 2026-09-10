@@ -4,11 +4,11 @@
   import { CircleMinusSolid, CloseCircleSolid } from "flowbite-svelte-icons";
   import { getCurrentWindow } from "@tauri-apps/api/window";
   import { onDestroy, onMount } from "svelte";
-  import { MoveWindowToCursor } from "$lib/move";
   import { add_item } from "$lib/database";
   const appWindow = getCurrentWindow();
   import type { UnlistenFn } from "@tauri-apps/api/event";
-  import { register, unregister } from "@tauri-apps/plugin-global-shortcut";
+  import { savedStore } from "$lib/database";
+  import { sync_shortcuts, teardown_shortcuts } from "$lib/shortcuts";
   import {
     onHTMLUpdate,
     onImageUpdate,
@@ -42,20 +42,17 @@
     //   add_item({ data_type: "html", value: event });
     // });
 
-    try {
-      await unregister("Shift+space");
-    } catch {
-      console.log("No registered shortcut");
-    }
-    await register("Shift+space", async (e) => {
-      if (e.state == "Pressed") {
-        await MoveWindowToCursor();
-      }
+    await sync_shortcuts();
+    // Re-register saved-item hotkeys whenever the saved list changes.
+    unsubscribeSaved = savedStore.subscribe(() => {
+      void sync_shortcuts();
     });
     startListening();
   });
+  let unsubscribeSaved: (() => void) | undefined;
   onDestroy(async () => {
-    await unregister("Shift+space");
+    unsubscribeSaved?.();
+    await teardown_shortcuts();
     unlistenTextUpdate();
     unlistenImageUpdate();
     unlisten();
