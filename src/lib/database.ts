@@ -3,6 +3,51 @@ import { writable } from "svelte/store";
 
 const db = Database.get("sqlite:clipboard.db");
 
+/** Hard cap on the on-disk size of the history data before we prune (bytes). */
+const HISTORY_MAX_BYTES = 100 * 1024 * 1024; // 100 MiB
+/** How many of the oldest history rows to drop per prune pass. */
+const PRUNE_BATCH = 200;
+
+let pruning = false;
+
+/**
+ * Drop the oldest `history` rows until the database is back under
+ * `HISTORY_MAX_BYTES`, then reclaim the freed pages. The migration-installed
+ * trigger bounds the row count; this bounds the byte size (large image blobs).
+ */
+export async function prune_history(): Promise<boolean> {
+  if (pruning) return false;
+  pruning = true;
+  let didPrune = false;
+  try {
+    while ((await db_size_bytes()) > HISTORY_MAX_BYTES) {
+      const rows: { c: number }[] = await db.select(
+        "SELECT COUNT(*) AS c FROM history",
+      );
+      if (!rows[0]?.c || rows[0].c <= PRUNE_BATCH) break;
+      await db.execute(
+        "DELETE FROM history WHERE id IN (SELECT id FROM history ORDER BY id ASC LIMIT $1)",
+        [PRUNE_BATCH],
+      );
+      didPrune = true;
+    }
+    if (didPrune) {
+      await db.execute("VACUUM");
+      historyStore.set(await get_all());
+    }
+  } finally {
+    pruning = false;
+  }
+  return didPrune;
+}
+
+async function db_size_bytes(): Promise<number> {
+  const rows: { size: number }[] = await db.select(
+    "SELECT page_count * page_size AS size FROM pragma_page_count(), pragma_page_size()",
+  );
+  return rows[0]?.size ?? 0;
+}
+
 export async function add_item(item: History): Promise<QueryResult> {
   const res = db.execute(
     "INSERT INTO history (data_type, value) VALUES ($1, $2)",
@@ -10,6 +55,7 @@ export async function add_item(item: History): Promise<QueryResult> {
   );
   await res;
   historyStore.set(await get_all());
+  void prune_history();
   return res;
 }
 
@@ -67,7 +113,7 @@ export async function get_all_hidden(): Promise<Secret[]> {
 
 export async function get_all_like(search: string): Promise<History[]> {
   return db.select(
-    "SELECT DISTINCT data_type, value FROM history WHERE data_type = 'text' AND value LIKE '%$1%' ORDER BY id DESC LIMIT 300",
+    "SELECT DISTINCT data_type, value FROM history WHERE data_type = 'text' AND value LIKE '%' || $1 || '%' COLLATE NOCASE ORDER BY id DESC LIMIT 300",
     [search],
   );
 }

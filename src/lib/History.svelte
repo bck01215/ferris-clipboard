@@ -1,5 +1,6 @@
 <script lang="ts">
   import { historyStore } from "$lib/database";
+  import { fuzzy_match } from "$lib/fuzzy";
   import Contents from "$lib/Contents.svelte";
   let search = "";
 </script>
@@ -19,7 +20,7 @@
 
 <Contents
   history={$historyStore.filter((item) => {
-    if (search == "") return true;
-    return item.value.includes(search) && item.data_type == "text";
+    if (search.trim() == "") return true;
+    return item.data_type == "text" && fuzzy_match(search, item.value);
   })}
 />

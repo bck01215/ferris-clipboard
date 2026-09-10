@@ -26,6 +26,24 @@ pub fn run() {
             ",
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 2,
+            description: "auto_prune_history",
+            sql: "
+                -- Keep the history table bounded: whenever a row is inserted,
+                -- delete the oldest rows beyond the most recent HISTORY_MAX_ROWS.
+                CREATE TRIGGER IF NOT EXISTS prune_history AFTER INSERT ON history
+                BEGIN
+                    DELETE FROM history
+                    WHERE id <= (
+                        SELECT id FROM history
+                        ORDER BY id DESC
+                        LIMIT 1 OFFSET 5000
+                    );
+                END;
+            ",
+            kind: MigrationKind::Up,
+        },
     ];
     tauri::Builder::default()
         .plugin(tauri_plugin_os::init())

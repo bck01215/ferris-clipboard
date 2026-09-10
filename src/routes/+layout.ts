@@ -1,7 +1,7 @@
 // Tauri doesn't have a Node.js server to do proper SSR
 // so we will use adapter-static to prerender the app (SSG)
 // See: https://v2.tauri.app/start/frontend/sveltekit/ for more info
-import { historyStore, get_all, get_all_saved, savedStore, get_all_hidden, hiddenStore } from "$lib/database";
+import { historyStore, get_all, get_all_saved, savedStore, get_all_hidden, hiddenStore, prune_history } from "$lib/database";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { scaleFactor } from "$lib/move";
 import { primaryMonitor } from "@tauri-apps/api/window";
@@ -20,6 +20,7 @@ export async function load() {
   console.log(factor, "from primary");
 
   scaleFactor.set(factor || await appwindow.scaleFactor());
+  await prune_history();
   historyStore.set(await get_all());
   savedStore.set(await get_all_saved());
   hiddenStore.set(await get_all_hidden());
