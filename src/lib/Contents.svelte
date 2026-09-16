@@ -1,6 +1,7 @@
 <script lang="ts">
   import { GradientButton, Button } from "flowbite-svelte";
   import { hiddenStore, type History } from "$lib/database";
+  import { prepare, match_positions } from "$lib/fuzzy";
   import ContextMenu from "$lib/HistoryContextMenu.svelte";
   import {
     writeImageBase64,
@@ -8,6 +9,7 @@
     writeText,
   } from "tauri-plugin-clipboard-api";
   export let history: History[];
+  export let search = "";
   let selectedItem: History = { data_type: "text", value: "" };
   // pos is cursor position when right click occur
   let pos = { x: 0, y: 0 };
@@ -45,6 +47,33 @@
     });
     return filteredItem;
   }
+
+  type Segment = { text: string; hit: boolean };
+
+  // Positions are computed against `text` as passed in, so callers must
+  // pass the already-redacted display string - filterHidenItems() changes
+  // string length via replaceAll, which would shift indices computed
+  // against the raw value.
+  function highlightSegments(text: string, query: string): Segment[] {
+    if (query === "") return [{ text, hit: false }];
+    const positions = new Set(match_positions(query, prepare(text)));
+    if (positions.size === 0) return [{ text, hit: false }];
+
+    const segments: Segment[] = [];
+    let cur = "";
+    let curHit = positions.has(0);
+    for (let i = 0; i < text.length; i++) {
+      const hit = positions.has(i);
+      if (hit !== curHit) {
+        segments.push({ text: cur, hit: curHit });
+        cur = "";
+        curHit = hit;
+      }
+      cur += text[i];
+    }
+    segments.push({ text: cur, hit: curHit });
+    return segments;
+  }
 </script>
 
 {#each history as item}
@@ -70,7 +99,13 @@
         <div
           class="w-full h-full max-h-8 overflow-hidden m-auto justify-center text-center"
         >
-          <p class="text-xs">{filterHidenItems(item.value)}</p>
+          <p class="text-xs">
+            {#each highlightSegments(filterHidenItems(item.value), search) as seg}
+              {#if seg.hit}<mark class="rounded-sm bg-yellow-300 text-black"
+                  >{seg.text}</mark
+                >{:else}{seg.text}{/if}
+            {/each}
+          </p>
         </div>
       </Button>
     {:else if item.data_type == "html"}

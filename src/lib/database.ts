@@ -118,7 +118,7 @@ export async function delete_hidden(value: string): Promise<QueryResult> {
 
 export async function get_all(): Promise<History[]> {
   return db.select(
-    "SELECT DISTINCT data_type, value FROM history ORDER BY id DESC LIMIT 300",
+    "SELECT DISTINCT data_type, value FROM history ORDER BY id DESC LIMIT 5000",
   );
 }
 
@@ -157,13 +157,6 @@ export const DEFAULT_TOGGLE_SHORTCUT = "Shift+Space";
 export async function get_all_hidden(): Promise<Secret[]> {
   return db.select(
     "SELECT DISTINCT display, value FROM secrets ORDER BY id DESC ",
-  );
-}
-
-export async function get_all_like(search: string): Promise<History[]> {
-  return db.select(
-    "SELECT DISTINCT data_type, value FROM history WHERE data_type = 'text' AND value LIKE '%' || $1 || '%' COLLATE NOCASE ORDER BY id DESC LIMIT 300",
-    [search],
   );
 }
 

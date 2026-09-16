@@ -1,8 +1,34 @@
 <script lang="ts">
-  import { historyStore } from "$lib/database";
-  import { fuzzy_match } from "$lib/fuzzy";
+  import { historyStore, type History } from "$lib/database";
+  import { prepare, queryMask, score, type Candidate } from "$lib/fuzzy";
   import Contents from "$lib/Contents.svelte";
+
+  const RENDER_CAP = 100;
+
   let search = "";
+
+  $: candidates = $historyStore
+    .filter((item) => item.data_type !== "image")
+    .map((item) => ({ item, cand: prepare(item.value) }));
+
+  $: query = search.trim().toLowerCase();
+
+  $: results = (query === "" ? $historyStore : rank(candidates, query)).slice(
+    0,
+    RENDER_CAP,
+  );
+
+  function rank(
+    candidates: { item: History; cand: Candidate }[],
+    query: string,
+  ): History[] {
+    const qMask = queryMask(query);
+    return candidates
+      .map((c, i) => ({ item: c.item, s: score(query, qMask, c.cand), i }))
+      .filter((r) => r.s > 0)
+      .sort((a, b) => b.s - a.s || a.i - b.i) // score desc, then original recency
+      .map((r) => r.item);
+  }
 </script>
 
 <div class="mb-6">
@@ -18,9 +44,4 @@
   />
 </div>
 
-<Contents
-  history={$historyStore.filter((item) => {
-    if (search.trim() == "") return true;
-    return item.data_type == "text" && fuzzy_match(search, item.value);
-  })}
-/>
+<Contents history={results} search={query} />
