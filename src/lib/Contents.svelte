@@ -133,6 +133,7 @@
   >
     <button
       type="button"
+      tabindex="-1"
       onclick={async (e: MouseEvent) => {
         e.preventDefault();
         if (e.ctrlKey) {

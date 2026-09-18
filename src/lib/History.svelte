@@ -11,11 +11,17 @@
 
   $: if ($searchFocusRequest >= 0) searchInput?.focus();
 
-  $: candidates = $historyStore
-    .filter((item) => item.data_type !== "image")
-    .map((item) => ({ item, cand: prepare(item.value) }));
-
   $: query = search.trim().toLowerCase();
+
+  // Fuzzy-preparing every row is real work (a full-string lowercase pass per
+  // item) - skip it entirely while not searching so every clipboard change
+  // (including the one this app's own paste triggers) doesn't lag the UI.
+  $: candidates =
+    query === ""
+      ? []
+      : $historyStore
+          .filter((item) => item.data_type !== "image")
+          .map((item) => ({ item, cand: prepare(item.value) }));
 
   $: results = (query === "" ? $historyStore : rank(candidates, query)).slice(
     0,

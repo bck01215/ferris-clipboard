@@ -16,6 +16,42 @@
         pendingDelete = null;
     }
 
+    // Arrow-key highlight + Enter-to-select, matching the history/saved list.
+    let selectedIndex = 0;
+    let prevHidden: typeof $hiddenStore | undefined;
+    $: if ($hiddenStore !== prevHidden) {
+        selectedIndex = 0;
+        prevHidden = $hiddenStore;
+    }
+
+    function onKeydown(e: KeyboardEvent) {
+        if (pendingDelete) {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                confirmDelete();
+            }
+            return; // Escape-to-cancel is handled by the dialog itself
+        }
+
+        // Anything focused inside the add-secret form - the two fields or
+        // the submit button - should keep Enter's native behavior (submit)
+        // rather than have it hijacked for the delete-list selection below.
+        const inForm =
+            e.target instanceof HTMLElement && e.target.closest("form");
+
+        if ($hiddenStore.length === 0) return;
+        if (e.key === "ArrowDown") {
+            e.preventDefault();
+            selectedIndex = Math.min(selectedIndex + 1, $hiddenStore.length - 1);
+        } else if (e.key === "ArrowUp") {
+            e.preventDefault();
+            selectedIndex = Math.max(selectedIndex - 1, 0);
+        } else if (e.key === "Enter" && !inForm) {
+            e.preventDefault();
+            pendingDelete = $hiddenStore[selectedIndex];
+        }
+    }
+
     async function handleSubmit(e: SubmitEvent) {
         e.preventDefault();
         if (display && value && display !== value) {
@@ -83,11 +119,15 @@
 
     {#if $hiddenStore.length > 0}
         <div class="flex flex-col gap-1">
-            {#each $hiddenStore as hiddenItem}
+            {#each $hiddenStore as hiddenItem, i}
                 <button
                     type="button"
+                    tabindex="-1"
                     onclick={() => (pendingDelete = hiddenItem)}
-                    class="flex w-full items-center rounded-md px-3 py-2 text-left text-gray-700 transition-colors hover:bg-black/5 hover:text-red-500 dark:text-gray-100 dark:hover:bg-white/10 dark:hover:text-red-400"
+                    class="flex w-full items-center rounded-md px-3 py-2 text-left text-gray-700 transition-colors dark:text-gray-100 {i ===
+                    selectedIndex
+                        ? 'bg-blue-500/10'
+                        : 'hover:bg-black/5 hover:text-red-500 dark:hover:bg-white/10 dark:hover:text-red-400'}"
                 >
                     Delete {hiddenItem.display}
                 </button>
@@ -95,6 +135,8 @@
         </div>
     {/if}
 </div>
+
+<svelte:window on:keydown={onKeydown} />
 
 {#if pendingDelete}
     <div

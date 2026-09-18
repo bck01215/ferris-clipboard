@@ -11,11 +11,29 @@
   let selected = "history";
 
   function onWindowKeydown(e: KeyboardEvent) {
-    if (!(e.metaKey || e.ctrlKey)) return;
-    const index = TAB_KEYS.findIndex((_, i) => e.key === String(i + 1));
-    if (index === -1) return;
+    if (e.metaKey || e.ctrlKey) {
+      const index = TAB_KEYS.findIndex((_, i) => e.key === String(i + 1));
+      if (index === -1) return;
+      e.preventDefault();
+      selected = TAB_KEYS[index];
+      return;
+    }
+
+    // Bare Left/Right cycle tabs - but only when that wouldn't eat a cursor
+    // move inside a text field the user is actively editing (an empty field
+    // has nothing for the arrow to move through, so it's free to use).
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+    const target = e.target;
+    const isNonEmptyTextField =
+      (target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement) &&
+      target.value.length > 0;
+    if (isNonEmptyTextField) return;
+
     e.preventDefault();
-    selected = TAB_KEYS[index];
+    const current = TAB_KEYS.indexOf(selected);
+    const delta = e.key === "ArrowLeft" ? -1 : 1;
+    selected = TAB_KEYS[(current + delta + TAB_KEYS.length) % TAB_KEYS.length];
   }
 
   onMount(() => {
