@@ -22,6 +22,7 @@
   // let unlistenHtmlUpdate: UnlistenFn;
   // let unlistenSomethingUpdate: UnlistenFn;
   onMount(async () => {
+    await appWindow.setVisibleOnAllWorkspaces(true);
     unlisten = await getCurrentWindow().onFocusChanged(
       ({ payload: focused }) => {
         if (!focused) {
