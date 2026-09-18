@@ -9,6 +9,7 @@
   import type { UnlistenFn } from "@tauri-apps/api/event";
   import { savedStore } from "$lib/database";
   import { sync_shortcuts, teardown_shortcuts } from "$lib/shortcuts";
+  import { searchFocusRequest } from "$lib/focus";
   import {
     onHTMLUpdate,
     onImageUpdate,
@@ -22,10 +23,18 @@
   // let unlistenHtmlUpdate: UnlistenFn;
   // let unlistenSomethingUpdate: UnlistenFn;
   onMount(async () => {
+    // DarkMode hardcodes tabindex=0 on its own button, so a passed-in prop
+    // can't override it — drop it out of tab order here instead.
+    document
+      .querySelector<HTMLButtonElement>("#titlebar-mode button")
+      ?.setAttribute("tabindex", "-1");
+
     await appWindow.setVisibleOnAllWorkspaces(true);
     unlisten = await getCurrentWindow().onFocusChanged(
       ({ payload: focused }) => {
-        if (!focused) {
+        if (focused) {
+          searchFocusRequest.update((n) => n + 1);
+        } else {
           appWindow.hide();
         }
       },
@@ -51,6 +60,11 @@
     startListening();
   });
   let unsubscribeSaved: (() => void) | undefined;
+  function onWindowKeydown(e: KeyboardEvent) {
+    if (e.key === "Escape") {
+      appWindow.hide();
+    }
+  }
   onDestroy(async () => {
     unsubscribeSaved?.();
     await teardown_shortcuts();
@@ -61,38 +75,45 @@
   });
 </script>
 
-<div data-tauri-drag-region class="titlebar m-b2">
-  <div class="titlebar-button" id="titlebar-minimize">
-    <button
-      type="button"
-      on:click={() => appWindow.hide()}
-      class="text-yellow-400 dark:text-yellow-400 hover:bg-yellow-100 dark:hover:bg-yellow-300 dark:hover:bg-opacity-25 focus:outline-none rounded-lg text-sm p-2.5"
-    >
-      <CircleMinusSolid />
-    </button>
-  </div>
-  <div class="titlebar-button" id="titlebar-mode">
-    <DarkMode />
-  </div>
-  <div class="titlebar-button" id="titlebar-close">
-    <button
-      on:click={() => appWindow.hide()}
-      type="button"
-      class="text-red-500 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-300 dark:hover:bg-opacity-25 focus:outline-none rounded-lg text-sm p-2.5"
-    >
-      <CloseCircleSolid />
-    </button>
-  </div>
-</div>
+<svelte:window on:keydown={onWindowKeydown} />
 
-<div class="w-screen h-screen m-auto overflow-x-hidden pb-8 container">
-  <slot />
+<div
+  class="keepalive flex h-screen w-screen flex-col bg-white/90 backdrop-blur-xl dark:bg-black/50"
+>
+  <div data-tauri-drag-region class="titlebar m-b2">
+    <div class="titlebar-button" id="titlebar-minimize">
+      <button
+        type="button"
+        tabindex="-1"
+        on:click={() => appWindow.hide()}
+        class="text-yellow-400 dark:text-yellow-400 hover:bg-yellow-100 dark:hover:bg-yellow-300 dark:hover:bg-opacity-25 focus:outline-none rounded-lg text-sm p-2.5"
+      >
+        <CircleMinusSolid />
+      </button>
+    </div>
+    <div class="titlebar-button" id="titlebar-mode">
+      <DarkMode />
+    </div>
+    <div class="titlebar-button" id="titlebar-close">
+      <button
+        on:click={() => appWindow.hide()}
+        type="button"
+        tabindex="-1"
+        class="text-red-500 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-300 dark:hover:bg-opacity-25 focus:outline-none rounded-lg text-sm p-2.5"
+      >
+        <CloseCircleSolid />
+      </button>
+    </div>
+  </div>
+
+  <div class="w-screen flex-1 m-auto overflow-x-hidden overflow-y-auto pb-8 container">
+    <slot />
+  </div>
 </div>
 
 <style>
   .titlebar {
     height: 30px;
-    background: #ffffff00;
     user-select: none;
     display: flex;
     justify-content: flex-end;
@@ -108,6 +129,11 @@
     height: 30px;
     user-select: none;
     -webkit-user-select: none;
+    opacity: 0.35;
+    transition: opacity 150ms ease;
+  }
+  .titlebar:hover .titlebar-button {
+    opacity: 1;
   }
   :global(html) {
     overflow-x: hidden;
@@ -119,5 +145,21 @@
   }
   .container::-webkit-scrollbar {
     display: none; /* Safari and Chrome */
+  }
+  /* macOS/WKWebView stops recompositing backdrop-filter once mouse input
+     goes idle, so the blur lags and the glass looks more transparent than
+     it should. An imperceptible, always-running property change keeps the
+     layer repainting so the blur (and transparency) stay constant. */
+  .keepalive {
+    animation: keepalive-repaint 1s linear infinite;
+  }
+  @keyframes keepalive-repaint {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.9999;
+    }
   }
 </style>

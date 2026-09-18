@@ -18,7 +18,7 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2.6", features = [] }
 
 [dependencies]
-tauri = { version = "2.11", features = [] }
+tauri = { version = "2.11", features = ["macos-private-api"] }
 tauri-plugin-opener = "2.5"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
@@ -28,4 +28,11 @@ tauri-plugin-os = "2.3"
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-global-shortcut = "2.3"
+
+# macOS 27 / Xcode 27's dyld requires 8-byte alignment on a dylib's LINKEDIT
+# string pool; cargo's default debuginfo stripping of proc-macro dylibs (and
+# their deps, e.g. sqlx-macros) can leave it 4-byte aligned, which dyld then
+# refuses to dlopen. Skipping strip for this class of artifact avoids it.
+[profile.release.build-override]
+strip = "none"
 

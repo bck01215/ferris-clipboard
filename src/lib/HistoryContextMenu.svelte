@@ -45,18 +45,18 @@
 <nav
   use:getContextMenuDimension
   style="position: absolute; top: {pos.y}px; left: {pos.x}px"
-  class="bg-white border border-gray-300 rounded-lg shadow-lg dark:bg-gray-800 dark:border-gray-600 dark:text-white"  >
-  <div class="p-2">
+  class="bg-white/95 backdrop-blur-md border border-gray-200/70 rounded-lg shadow-lg dark:bg-black/90 dark:border-gray-600/60 dark:text-white"  >
+  <div class="p-1">
     <ul>
       {#each menuItems as item}
-        <li class="mb-1 last:mb-0">
+        <li class="mb-0.5 last:mb-0">
           <button
             on:click={item.onClick}
-            class={`flex items-center w-full px-4 py-2 text-left rounded hover:bg-gray-200 dark:hover:bg-gray-700  ${
-              item.class 
+            class={`flex items-center w-full px-2 py-1 text-left text-xs rounded hover:bg-gray-200 dark:hover:bg-gray-700  ${
+              item.class
             }`}
           >
-            <i class={`mr-3 ${item.class}`}></i>
+            <i class={`mr-2 ${item.class}`}></i>
             {item.displayText}
           </button>
         </li>

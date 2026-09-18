@@ -1,15 +1,57 @@
 <script lang="ts">
-  import { GradientButton, Button } from "flowbite-svelte";
   import { hiddenStore, type History } from "$lib/database";
   import { prepare, match_positions } from "$lib/fuzzy";
   import ContextMenu from "$lib/HistoryContextMenu.svelte";
+  import { getCurrentWindow } from "@tauri-apps/api/window";
   import {
     writeImageBase64,
     writeHtml,
     writeText,
   } from "tauri-plugin-clipboard-api";
+  const appWindow = getCurrentWindow();
   export let history: History[];
   export let search = "";
+  export let selectedIndex = 0;
+
+  // Reset the highlight whenever the caller hands us a new list (a fresh
+  // search query, or the underlying store updating) - but not just because
+  // selectedIndex itself changed via arrow keys.
+  let prevHistory: History[] | undefined;
+  $: if (history !== prevHistory) {
+    selectedIndex = 0;
+    prevHistory = history;
+  }
+
+  let rowEls: HTMLDivElement[] = [];
+  $: rowEls[selectedIndex]?.scrollIntoView({ block: "nearest" });
+
+  async function paste(item: History): Promise<void> {
+    if (item.data_type === "text") {
+      await writeText(item.value);
+    } else if (item.data_type === "html") {
+      await writeHtml(item.value);
+    } else if (item.data_type === "image") {
+      await writeImageBase64(item.value);
+    }
+  }
+
+  function onKeydown(e: KeyboardEvent) {
+    if (history.length === 0) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      selectedIndex = Math.min(selectedIndex + 1, history.length - 1);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      selectedIndex = Math.max(selectedIndex - 1, 0);
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      const item = history[selectedIndex];
+      if (item) {
+        paste(item).then(() => appWindow.hide());
+      }
+    }
+  }
+
   let selectedItem: History = { data_type: "text", value: "" };
   // pos is cursor position when right click occur
   let pos = { x: 0, y: 0 };
@@ -76,70 +118,57 @@
   }
 </script>
 
-{#each history as item}
+{#each history as item, i}
+  {@const isSecret = filterHidenItems(item.value) != item.value}
   <div
-    on:contextmenu|preventDefault={(e) => rightClickContextMenu(e, item)}
+    bind:this={rowEls[i]}
+    oncontextmenu={(e: MouseEvent) => {
+      e.preventDefault();
+      rightClickContextMenu(e, item);
+    }}
     role="contentinfo"
-    class="flex"
+    class="mx-2 my-0.5 border-l-2 {isSecret
+      ? 'border-purple-500'
+      : 'border-transparent'}"
   >
-    {#if item.data_type == "text" && item.value.trim() != ""}
-      <Button
-        outline
-        onclick={async (e: MouseEvent) => {
-          e.preventDefault();
-          if (e.ctrlKey) {
-            return;
-          }
-          await writeText(item.value);
-        }}
-        size="xs"
-        color={filterHidenItems(item.value) != item.value ? "purple" : "blue"}
-        class="w-11/12 h-min-6 h-max-12 overflow-hidden m-auto mt-2 mb-2 text-gray-700 hover:text-gray-100 dark:text-gray-100"
-      >
-        <div
-          class="w-full h-full max-h-8 overflow-hidden m-auto justify-center text-center"
+    <button
+      type="button"
+      onclick={async (e: MouseEvent) => {
+        e.preventDefault();
+        if (e.ctrlKey) {
+          return;
+        }
+        await paste(item);
+      }}
+      class="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left transition-colors {i ===
+      selectedIndex
+        ? 'bg-blue-500/10'
+        : 'hover:bg-black/5 dark:hover:bg-white/10'}"
+    >
+      {#if item.data_type == "text" && item.value.trim() != ""}
+        <p
+          class="line-clamp-2 flex-1 overflow-hidden text-xs text-gray-700 dark:text-gray-100"
         >
-          <p class="text-xs">
-            {#each highlightSegments(filterHidenItems(item.value), search) as seg}
-              {#if seg.hit}<mark class="rounded-sm bg-yellow-300 text-black"
-                  >{seg.text}</mark
-                >{:else}{seg.text}{/if}
-            {/each}
-          </p>
+          {#each highlightSegments(filterHidenItems(item.value), search) as seg}
+            {#if seg.hit}<mark class="rounded-sm bg-yellow-300 text-black"
+                >{seg.text}</mark
+              >{:else}{seg.text}{/if}
+          {/each}
+        </p>
+      {:else if item.data_type == "html"}
+        <div
+          class="line-clamp-2 flex-1 overflow-hidden text-xs text-gray-700 dark:text-gray-100"
+        >
+          {@html item.value}
         </div>
-      </Button>
-    {:else if item.data_type == "html"}
-      <Button
-        outline
-        onclick={async (e: MouseEvent) => {
-          if (e.ctrlKey) {
-            return;
-          }
-          await writeHtml(item.value);
-        }}
-        color="red"
-        size="xs"
-        class="w-full h-min-6 h-max-12 overflow-hidden m-auto mt-2 mb-2"
-      >
-        {@html item.value}
-      </Button>
-    {:else if item.data_type == "image"}
-      <GradientButton
-        outline
-        onclick={async () => {
-          await writeImageBase64(item.value);
-        }}
-        color="lime"
-        size="xs"
-        class="w-72 h-min-6 h-max-24 overflow-hidden m-auto mt-2 mb-2"
-      >
+      {:else if item.data_type == "image"}
         <img
-          class="w-full h-24"
+          class="h-24 w-full rounded object-cover"
           src="data:image/png;base64,{item.value}"
           alt="clipboarditem"
         />
-      </GradientButton>
-    {/if}
+      {/if}
+    </button>
   </div>
 {/each}
 
@@ -151,4 +180,5 @@
     }
     showMenu = false;
   }}
+  on:keydown={onKeydown}
 />
