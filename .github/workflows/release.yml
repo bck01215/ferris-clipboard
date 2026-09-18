@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    tags:
+      - "v*.*.*"
 
 # Cancel in-flight releases if newer commits land while this one is building.
 concurrency:
@@ -37,7 +39,13 @@ jobs:
         id: tag
         shell: bash
         run: |
-          echo "tag=v0.0.0-build.${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+          if [[ "${{ github.ref }}" == refs/tags/v*.*.* ]]; then
+            echo "tag=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=v0.0.0-build.${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          fi
           echo "sha=$(echo ${{ github.sha }} | cut -c1-7)" >> "$GITHUB_OUTPUT"
 
       - name: Install Linux dependencies
@@ -76,5 +84,5 @@ jobs:
           releaseName: "ferris-clipboard ${{ steps.tag.outputs.tag }}"
           releaseBody: "Automated release from commit ${{ steps.tag.outputs.sha }}."
           releaseDraft: false
-          prerelease: true
+          prerelease: ${{ steps.tag.outputs.prerelease }}
           args: ${{ matrix.args }}
