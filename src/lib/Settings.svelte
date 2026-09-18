@@ -34,14 +34,14 @@
 
 <div class="flex w-screen flex-col gap-3 p-3 text-xs">
   {#if message}
-    <Toast on:close={() => (message = "")} color={success ? "green" : "red"}>
-      <svelte:fragment slot="icon">
+    <Toast color={success ? "green" : "red"}>
+      {#snippet icon()}
         {#if success}
           <CheckCircleSolid class="w-4 h-4" />
         {:else}
           <CloseCircleSolid class="w-4 h-4" />
         {/if}
-      </svelte:fragment>
+      {/snippet}
       <span class="text-xs">{message}</span>
     </Toast>
   {/if}

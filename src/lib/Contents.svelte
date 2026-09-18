@@ -85,7 +85,7 @@
     {#if item.data_type == "text" && item.value.trim() != ""}
       <Button
         outline
-        on:click={async (e) => {
+        onclick={async (e: MouseEvent) => {
           e.preventDefault();
           if (e.ctrlKey) {
             return;
@@ -111,7 +111,7 @@
     {:else if item.data_type == "html"}
       <Button
         outline
-        on:click={async (e: MouseEvent) => {
+        onclick={async (e: MouseEvent) => {
           if (e.ctrlKey) {
             return;
           }
@@ -126,7 +126,7 @@
     {:else if item.data_type == "image"}
       <GradientButton
         outline
-        on:click={async () => {
+        onclick={async () => {
           await writeImageBase64(item.value);
         }}
         color="lime"

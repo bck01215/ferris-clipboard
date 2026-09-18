@@ -23,15 +23,15 @@
 
 <div class="flex w-screen flex-col mb-4 space-y-4">
     {#if message}
-    <Toast on:close={() => message = "" } color="{success ? 'green' : 'red'}" contentClass="flex space-x-4 rtl:space-x-reverse divide-x rtl:divide-x-reverse divide-gray-200 dark:divide-gray-700">
-        <svelte:fragment slot="icon">
+    <Toast color="{success ? 'green' : 'red'}" contentClass="flex space-x-4 rtl:space-x-reverse divide-x rtl:divide-x-reverse divide-gray-200 dark:divide-gray-700">
+        {#snippet icon()}
             {#if success}
             <CheckCircleSolid class="w-5 h-5" />
             {:else}
             <CloseCircleSolid class="w-5 h-5" />
             {/if}
             <span class="sr-only">Check icon</span>
-        </svelte:fragment>
+        {/snippet}
         {message}
     </Toast>
     {/if}
@@ -52,5 +52,5 @@
 </div>
 
 {#each $hiddenStore as hiddenItem}
-    <Button outline type="submit" color="red" class="w-full mb-2 h-12 flex items-center overflow-hidden" on:click={() => delete_hidden(hiddenItem.value)}>Delete {hiddenItem.display}</Button>
+    <Button outline type="submit" color="red" class="w-full mb-2 h-12 flex items-center overflow-hidden" onclick={() => delete_hidden(hiddenItem.value)}>Delete {hiddenItem.display}</Button>
 {/each}

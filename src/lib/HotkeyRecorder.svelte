@@ -114,8 +114,8 @@
 <Button
   size="xs"
   color={recording ? "yellow" : value ? "blue" : "alternative"}
-  on:click={start}
-  on:blur={() => (recording = false)}
+  onclick={start}
+  onblur={() => (recording = false)}
 >
   {#if recording}
     Press keys… (Esc to cancel)

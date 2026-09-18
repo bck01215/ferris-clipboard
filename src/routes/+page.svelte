@@ -10,7 +10,7 @@
 <Tabs
   class="w-screen flex text-xs"
   contentClass="w-full p-0 mt-4"
-  defaultClass="flex flex-nowrap"
+  ulClass="flex flex-nowrap"
 >
   <TabItem title="History" open>
     <History />
@@ -22,9 +22,11 @@
     <Saved />
   </TabItem>
   <TabItem>
-    <span slot="title" class="flex items-center" title="Settings">
-      <CogOutline class="w-4 h-4" />
-    </span>
+    {#snippet titleSlot()}
+      <span class="flex items-center" title="Settings">
+        <CogOutline class="w-4 h-4" />
+      </span>
+    {/snippet}
     <Settings />
   </TabItem>
 </Tabs>
